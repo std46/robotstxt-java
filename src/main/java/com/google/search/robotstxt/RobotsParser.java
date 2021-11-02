@@ -15,12 +15,15 @@
 package com.google.search.robotstxt;
 
 import com.google.common.flogger.FluentLogger;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
-/** Robots.txt parser implementation. */
+/**
+ * Robots.txt parser implementation.
+ */
 public class RobotsParser extends Parser {
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
   private final int valueMaxLengthBytes;
@@ -43,14 +46,14 @@ public class RobotsParser extends Parser {
    * Extracts substring between given indexes and trims preceding and succeeding whitespace
    * characters.
    *
-   * @param bytes data to extract from
+   * @param bytes      data to extract from
    * @param beginIndex the beginning index, inclusive
-   * @param endIndex the ending index, exclusive
+   * @param endIndex   the ending index, exclusive
    * @return extracted substring with trimmed whitespaces
    * @throws ParseException if there are only whitespace characters between given indexes
    */
   private static String trimBounded(final byte[] bytes, final int beginIndex, final int endIndex)
-      throws ParseException {
+          throws ParseException {
     int begin = beginIndex;
     int end = endIndex;
     while (begin < endIndex && isWhitespace((char) bytes[begin])) {
@@ -74,8 +77,8 @@ public class RobotsParser extends Parser {
         return DirectiveType.valueOf(key.toUpperCase());
       } catch (final IllegalArgumentException e) {
         final boolean disallowTypoDetected =
-            Stream.of("dissallow", "dissalow", "disalow", "diasllow", "disallaw")
-                .anyMatch(s -> key.compareToIgnoreCase(s) == 0);
+                Stream.of("dissallow", "dissalow", "disalow", "diasllow", "disallaw")
+                        .anyMatch(s -> key.compareToIgnoreCase(s) == 0);
         if (disallowTypoDetected) {
           logger.atInfo().log("Fixed typo: \"%s\" -> \"%s\"", key, "disallow");
           return DirectiveType.DISALLOW;
@@ -87,17 +90,17 @@ public class RobotsParser extends Parser {
   }
 
   private static void log(
-      final Level level,
-      final String message,
-      final byte[] robotsTxtBodyBytes,
-      final int lineBegin,
-      final int lineEnd,
-      final int lineNumber) {
+          final Level level,
+          final String message,
+          final byte[] robotsTxtBodyBytes,
+          final int lineBegin,
+          final int lineEnd,
+          final int lineNumber) {
     logger.at(level).log(
-        "%s%nAt line %d:%n%s\t",
-        message,
-        lineNumber,
-        new String(Arrays.copyOfRange(robotsTxtBodyBytes, lineBegin, lineEnd)));
+            "%s%nAt line %d:%n%s\t",
+            message,
+            lineNumber,
+            new String(Arrays.copyOfRange(robotsTxtBodyBytes, lineBegin, lineEnd)));
   }
 
   /**
@@ -105,22 +108,22 @@ public class RobotsParser extends Parser {
    * necessary. Most of parameters are used for logging.
    *
    * @param robotsTxtBodyBytes contents of robots.txt file
-   * @param separator index of separator between key and value
-   * @param limit index of key and value ending
-   * @param lineBegin index of line beginning
-   * @param lineEnd index of line ending
-   * @param lineNumber number of line in robots.txt file
+   * @param separator          index of separator between key and value
+   * @param limit              index of key and value ending
+   * @param lineBegin          index of line beginning
+   * @param lineEnd            index of line ending
+   * @param lineNumber         number of line in robots.txt file
    * @return parsed value within given line of robots.txt
    * @throws ParseException if line limits are invalid
    */
   private String getValue(
-      final byte[] robotsTxtBodyBytes,
-      final int separator,
-      final int limit,
-      final int lineBegin,
-      final int lineEnd,
-      final int lineNumber)
-      throws ParseException {
+          final byte[] robotsTxtBodyBytes,
+          final int separator,
+          final int limit,
+          final int lineBegin,
+          final int lineEnd,
+          final int lineNumber)
+          throws ParseException {
     String value = trimBounded(robotsTxtBodyBytes, separator + 1, limit);
 
     // Google-specific optimization: since no search engine will process more than 2083 bytes
@@ -133,26 +136,27 @@ public class RobotsParser extends Parser {
 
     if (valueBytes.length > maxLengthBytes) {
       log(
-          Level.INFO,
-          "Value truncated to " + valueMaxLengthBytes + " bytes.",
-          robotsTxtBodyBytes,
-          lineBegin,
-          lineEnd,
-          lineNumber);
+              Level.INFO,
+              "Value truncated to " + valueMaxLengthBytes + " bytes.",
+              robotsTxtBodyBytes,
+              lineBegin,
+              lineEnd,
+              lineNumber);
 
       value =
-          new String(
-              valueBytes, 0, Math.min(valueBytes.length, maxLengthBytes), StandardCharsets.UTF_8);
+              new String(
+                      valueBytes, 0, Math.min(valueBytes.length, maxLengthBytes),
+                      StandardCharsets.UTF_8);
     }
 
     return value;
   }
 
   private void parseLine(
-      final byte[] robotsTxtBodyBytes,
-      final int lineBegin,
-      final int lineEnd,
-      final int lineNumber) {
+          final byte[] robotsTxtBodyBytes,
+          final int lineBegin,
+          final int lineEnd,
+          final int lineNumber) {
     int limit = lineEnd;
     int separator = lineEnd;
     int whitespaceSeparator = lineEnd;
@@ -180,22 +184,22 @@ public class RobotsParser extends Parser {
       // accept whitespace instead.
       if (whitespaceSeparator != lineEnd) {
         log(
-            Level.INFO,
-            "Assuming whitespace as a separator.",
-            robotsTxtBodyBytes,
-            lineBegin,
-            lineEnd,
-            lineNumber);
+                Level.INFO,
+                "Assuming whitespace as a separator.",
+                robotsTxtBodyBytes,
+                lineBegin,
+                lineEnd,
+                lineNumber);
         separator = whitespaceSeparator;
       } else {
         if (hasContents) {
           log(
-              Level.WARNING,
-              "No separator found.",
-              robotsTxtBodyBytes,
-              lineBegin,
-              lineEnd,
-              lineNumber);
+                  Level.WARNING,
+                  "No separator found.",
+                  robotsTxtBodyBytes,
+                  lineBegin,
+                  lineEnd,
+                  lineNumber);
         }
         return;
       }
@@ -226,7 +230,7 @@ public class RobotsParser extends Parser {
   }
 
   @Override
-  Matcher parse(byte[] robotsTxtBodyBytes) {
+  public Matcher parse(byte[] robotsTxtBodyBytes) {
     final byte[] bomUtf8 = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
     int bomPos = 0;
 

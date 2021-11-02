@@ -173,3 +173,5 @@ fabric.properties
 .vscode/
 *.code-workspace
 .history/
+
+.idea/
